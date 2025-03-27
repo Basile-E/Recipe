@@ -1,4 +1,4 @@
-# 🍽️ RecipeVerse - Gestionnaire de Recettes Personnel
+# 🍽️ Recipient - Gestionnaire de Recettes Personnel
 
 ## 📋 TODO List
 - [ ] Héberger l'application en ligne (Vercel/Netlify)
@@ -14,7 +14,9 @@
 - [ ] faire en sorte que les jours sauvegardé soit save dans une database composé de lien avec la database de recette idem pour les semaines et mois 
 - [ ] faire une base de donés d'ingrédients et link les recette a cette base de doné (change le formulaire de création de recette avec des barre de recherche pour les ingredients de la database et les ajouter a la recette)
 - [ ] reglez l'affichage des jours save dans le planning de semaine
-- [ ]
+- [ ] trouver comment automatiquement ajouter une photo a la création d'une recette
+
+
 ## 🚀 Présentation du Projet
 
 RecipeVerse est une application web moderne de gestion de recettes, conçue pour les passionnés de cuisine qui souhaitent organiser et partager leurs recettes préférées.

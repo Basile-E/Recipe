@@ -54,16 +54,25 @@ const RecipeCardNew = ({ recipe, onDelete, onOpenFullScreen }) => {
             <p>{recipe.prepTime || 'Non spécifié'}</p>
           </div>
 
+          {/* Section Prix */}
+          <div className="recipe-price">
+            <strong>Prix :</strong>
+            <p>{recipe.price ? `${recipe.price} €` : 'Non spécifié'}</p>
+          </div>
+
           {/* Section Ingrédients */}
           <div className="recipe-ingredients">
             <strong>Ingrédients :</strong>
             <ul>
               {recipe.ingredients && recipe.ingredients.length > 0 ? (
-                recipe.ingredients.map((ingredient, index) => (
+                recipe.ingredients.slice(0, 3).map((ingredient, index) => (
                   <li key={index}>{ingredient}</li>
                 ))
               ) : (
                 <li>Aucun ingrédient</li>
+              )}
+              {recipe.ingredients && recipe.ingredients.length > 3 && (
+                <li>... et {recipe.ingredients.length - 3} autres</li>
               )}
             </ul>
           </div>
@@ -73,19 +82,16 @@ const RecipeCardNew = ({ recipe, onDelete, onOpenFullScreen }) => {
             <strong>Instructions :</strong>
             <ol>
               {recipe.instructions && recipe.instructions.length > 0 ? (
-                recipe.instructions.map((step, index) => (
+                recipe.instructions.slice(0, 2).map((step, index) => (
                   <li key={index}>{step}</li>
                 ))
               ) : (
                 <li>Aucune instruction</li>
               )}
+              {recipe.instructions && recipe.instructions.length > 2 && (
+                <li>... et {recipe.instructions.length - 2} autres étapes</li>
+              )}
             </ol>
-          </div>
-
-          {/* Section Prix */}
-          <div className="recipe-price">
-            <strong>Prix :</strong>
-            <p>{recipe.price ? `${recipe.price} €` : 'Non spécifié'}</p>
           </div>
 
           {/* Bouton de suppression */}
