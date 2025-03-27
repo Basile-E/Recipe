@@ -1,0 +1,46 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "title": "Gâteau au Chocolat",
+      "prepTime": "45 minutes",
+      "imageUrl": "https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1965&q=80",
+      "ingredients": [
+        "200g de chocolat",
+        "150g de farine", 
+        "100g de sucre",
+        "3 œufs"
+      ],
+      "instructions": [
+        "Préchauffer le four à 180°C",
+        "Faire fondre le chocolat",
+        "Mélanger tous les ingrédients",
+        "Cuire pendant 30 minutes"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Tiramisu",
+      "prepTime": "30 minutes (+ 4h de repos)",
+      "imageUrl": "https://images.unsplash.com/photo-1589985018141-5a76e5449227?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80",
+      "ingredients": [
+        "250g de mascarpone",
+        "3 œufs",
+        "100g de sucre", 
+        "200ml de café fort",
+        "200g de biscuits à la cuillère",
+        "Cacao en poudre"
+      ],
+      "instructions": [
+        "Séparer les blancs des jaunes d'œufs",
+        "Battre les jaunes avec le sucre jusqu'à blanchiment",
+        "Ajouter le mascarpone aux jaunes",
+        "Monter les blancs en neige et les incorporer délicatement",
+        "Tremper rapidement les biscuits dans le café",
+        "Alterner couches de biscuits et de crème",
+        "Saupoudrer de cacao",
+        "Réfrigérer 4h minimum avant de servir"
+      ]
+    }
+  ]
+} 
