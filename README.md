@@ -116,3 +116,6 @@ Les contributions sont les bienvenues ! Veuillez consulter les directives de con
 
 Votre Nom - [votre-email]
 Lien du projet : [URL du repository]
+
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/70600db5-f85b-4433-9be4-08a3d44777a5/deploy-status)](https://app.netlify.com/sites/baecoliv/deploys)
