@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
 import './RecipeCardNew.css';
 
 const RecipeCardNew = ({ recipe, onDelete, onOpenFullScreen }) => {
