@@ -9,7 +9,12 @@
 - [ ] Ajouter des traductions (internationalisation)
 - [ ] Ajouter une fonctionnalité de recherche par ingrédient
 - [ ] Ajouter la posibilité de supprimer et modifier les recettes
-
+- [ ] Ajouter le calcul du prix des recette et avec ca calculer le prix des jours/semaine/mois 
+- [ ] Ajouter a meal planning la pillule repas qui permet de faire un repas avec plusieurs plats
+- [ ] faire en sorte que les jours sauvegardé soit save dans une database composé de lien avec la database de recette idem pour les semaines et mois 
+- [ ] faire une base de donés d'ingrédients et link les recette a cette base de doné (change le formulaire de création de recette avec des barre de recherche pour les ingredients de la database et les ajouter a la recette)
+- [ ] reglez l'affichage des jours save dans le planning de semaine
+- [ ]
 ## 🚀 Présentation du Projet
 
 RecipeVerse est une application web moderne de gestion de recettes, conçue pour les passionnés de cuisine qui souhaitent organiser et partager leurs recettes préférées.

@@ -1,15 +1,41 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-function NewRecipePage({ onAddRecipe }) {
+function NewRecipePage({ onAddRecipe, onEditRecipe }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isEditing, setIsEditing] = useState(false);
+  const [recipeId, setRecipeId] = useState(null);
   const [newRecipe, setNewRecipe] = useState({
     title: '',
     prepTime: '',
     imageUrl: '',
     ingredients: [''],
-    instructions: ['']
+    instructions: [''],
+    price: ''
   });
+
+  useEffect(() => {
+    // Check if we're editing an existing recipe
+    const state = location.state;
+    if (state && state.recipe) {
+      const { recipe } = state;
+      setIsEditing(true);
+      setRecipeId(recipe.id);
+      setNewRecipe({
+        title: recipe.title || '',
+        prepTime: recipe.prepTime || '',
+        imageUrl: recipe.imageUrl || '',
+        ingredients: recipe.ingredients && recipe.ingredients.length > 0 
+          ? recipe.ingredients 
+          : [''],
+        instructions: recipe.instructions && recipe.instructions.length > 0 
+          ? recipe.instructions 
+          : [''],
+        price: recipe.price || ''
+      });
+    }
+  }, [location]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -51,39 +77,82 @@ function NewRecipePage({ onAddRecipe }) {
     }));
   };
 
-  const addRecipe = async (e) => {
+  const submitRecipe = async (e) => {
     e.preventDefault();
     try {
       // Validation des champs obligatoires
-      if (!newRecipe.title.trim()) {
+      if (!newRecipe.title || !newRecipe.title.trim()) {
         alert('Le titre de la recette est obligatoire');
         return;
       }
 
-      if (newRecipe.ingredients.length === 0 || newRecipe.ingredients.every(ing => !ing.trim())) {
+      // Vérification des ingrédients
+      const validIngredients = (newRecipe.ingredients || [])
+        .filter(ing => ing && ing.trim() !== '');
+      
+      if (validIngredients.length === 0) {
         alert('Veuillez ajouter au moins un ingrédient');
         return;
       }
 
-      if (newRecipe.instructions.length === 0 || newRecipe.instructions.every(inst => !inst.trim())) {
+      // Vérification des instructions
+      const validInstructions = (newRecipe.instructions || [])
+        .filter(inst => inst && inst.trim() !== '');
+      
+      if (validInstructions.length === 0) {
         alert('Veuillez ajouter au moins une instruction');
         return;
       }
 
-      await onAddRecipe(newRecipe);
+      // Validation et formatage du prix
+      let formattedPrice = '';
+      if (newRecipe.price) {
+        // Remplacer les virgules par des points
+        formattedPrice = newRecipe.price.replace(',', '.');
+        
+        // Vérifier si le prix est un nombre valide
+        if (isNaN(parseFloat(formattedPrice))) {
+          alert('Le prix doit être un nombre valide');
+          return;
+        }
+      }
+
+      // Préparer la recette à soumettre
+      const recipeToSubmit = {
+        title: newRecipe.title.trim(),
+        prepTime: newRecipe.prepTime || '',
+        imageUrl: newRecipe.imageUrl || '',
+        ingredients: validIngredients,
+        instructions: validInstructions,
+        price: formattedPrice
+      };
+
+      console.log('Soumission de la recette:', recipeToSubmit);
+
+      if (isEditing) {
+        // Édition d'une recette existante
+        if (!recipeId) {
+          throw new Error('ID de recette manquant pour la modification');
+        }
+        await onEditRecipe(recipeId, recipeToSubmit);
+      } else {
+        // Ajout d'une nouvelle recette
+        await onAddRecipe(recipeToSubmit);
+      }
+      
       navigate('/');
     } catch (error) {
-      console.error('Erreur lors de l\'ajout de la recette:', error);
-      alert(`Impossible d'ajouter la recette : ${error.message}`);
+      console.error('Erreur lors de la soumission de la recette:', error);
+      alert(`Impossible de soumettre la recette : ${error.message}`);
     }
   };
 
   return (
     <div className="new-recipe-page">
       <div className="new-recipe-container">
-        <h1>Créer une nouvelle recette</h1>
+        <h1>{isEditing ? 'Modifier la recette' : 'Créer une nouvelle recette'}</h1>
         <div className="recipe-form">
-          <form onSubmit={addRecipe}>
+          <form onSubmit={submitRecipe}>
             <div className="form-group">
               <label htmlFor="title">Titre de la recette</label>
               <input
@@ -107,6 +176,18 @@ function NewRecipePage({ onAddRecipe }) {
                 value={newRecipe.prepTime}
                 onChange={handleInputChange}
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="price">Prix (optionnel)</label>
+              <input
+                id="price"
+                type="text"
+                name="price"
+                placeholder="Ex: 15.50"
+                value={newRecipe.price}
+                onChange={handleInputChange}
               />
             </div>
 
@@ -176,7 +257,9 @@ function NewRecipePage({ onAddRecipe }) {
             </div>
             
             <div className="form-actions">
-              <button type="submit" className="submit-btn">Ajouter la recette</button>
+              <button type="submit" className="submit-btn">
+                {isEditing ? 'Modifier la recette' : 'Ajouter la recette'}
+              </button>
               <button 
                 type="button" 
                 className="cancel-btn" 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import NewRecipePage from './pages/NewRecipePage';
+import MealPlanningPage from './pages/MealPlanningPage';
 import Auth from './components/Auth';
 import { supabase, handleSupabaseError, testSupabaseConnection } from './supabaseClient';
 import './App.css';
@@ -18,6 +19,11 @@ function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
+        
+        // Si l'utilisateur se connecte, charger les recettes
+        if (event === 'SIGNED_IN') {
+          fetchRecipes();
+        }
       }
     );
 
@@ -31,7 +37,9 @@ function App() {
         
         if (isConnected) {
           setConnectionStatus('connected');
-          await fetchRecipes();
+          if (user) {
+            await fetchRecipes();
+          }
         } else {
           setConnectionStatus('error');
         }
@@ -92,7 +100,8 @@ function App() {
         instructions: Array.isArray(newRecipe.instructions)
           ? newRecipe.instructions.filter(inst => inst.trim() !== '')
           : (newRecipe.instructions || '').split(',').map(item => item.trim()).filter(item => item !== ''),
-        user_id: user.id
+        user_id: user.id,
+        price: newRecipe.price || ''
       };
 
       console.log('Recette à ajouter:', recipeToAdd);
@@ -145,18 +154,92 @@ function App() {
     }
   };
 
+  const editRecipe = async (recipeId, updatedRecipe) => {
+    try {
+      // Validation des paramètres d'entrée
+      if (!recipeId) {
+        console.error('ID de recette invalide');
+        alert('Impossible de modifier la recette : ID manquant');
+        return null;
+      }
+
+      // Validation et formatage du prix
+      if (updatedRecipe.price) {
+        // Remplacer les virgules par des points
+        updatedRecipe.price = updatedRecipe.price.replace(',', '.');
+        
+        // Vérifier si le prix est un nombre valide
+        if (isNaN(parseFloat(updatedRecipe.price))) {
+          alert('Le prix doit être un nombre valide');
+          return null;
+        }
+      }
+
+      // Préparer les données à mettre à jour
+      const recipeToUpdate = {
+        title: updatedRecipe.title || '',
+        prepTime: updatedRecipe.prepTime || '',
+        imageUrl: updatedRecipe.imageUrl || '',
+        ingredients: Array.isArray(updatedRecipe.ingredients) 
+          ? updatedRecipe.ingredients.filter(ing => ing.trim() !== '')
+          : [],
+        instructions: Array.isArray(updatedRecipe.instructions)
+          ? updatedRecipe.instructions.filter(inst => inst.trim() !== '')
+          : [],
+        price: updatedRecipe.price || ''
+      };
+
+      console.log('Mise à jour de la recette:', { recipeId, recipeToUpdate });
+
+      const { data, error } = await supabase
+        .from('recipes')
+        .update(recipeToUpdate)
+        .eq('id', recipeId)
+        .select();
+
+      if (error) {
+        console.error('Erreur Supabase lors de la modification:', error);
+        handleSupabaseError(error);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        console.error('Aucune donnée retournée après modification');
+        alert('Impossible de récupérer la recette modifiée');
+        return null;
+      }
+
+      // Mettre à jour l'état local
+      setRecipes(prev => 
+        prev.map(recipe => 
+          recipe.id === recipeId ? { ...recipe, ...data[0] } : recipe
+        )
+      );
+
+      return data[0];
+    } catch (error) {
+      console.error('Erreur lors de la modification de la recette:', error);
+      alert(`Impossible de modifier la recette : ${error.message}`);
+      return null;
+    }
+  };
+
   const openFullScreen = (recipe) => {
     setFullScreenRecipe(recipe);
+    document.body.classList.add('no-scroll');
   };
 
   const closeFullScreen = () => {
     setFullScreenRecipe(null);
+    document.body.classList.remove('no-scroll');
   };
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      setUser(null);
+      setRecipes([]);
     } catch (error) {
       console.error('Erreur de déconnexion:', error);
     }
@@ -186,15 +269,9 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {user ? (
-          <>
-            <button 
-              onClick={handleLogout} 
-              className="logout-btn"
-            >
-              Déconnexion
-            </button>
-            <Routes>
+        <Routes>
+          {user ? (
+            <>
               <Route 
                 path="/" 
                 element={
@@ -202,67 +279,113 @@ function App() {
                     recipes={recipes} 
                     onDelete={deleteRecipe} 
                     onOpenFullScreen={openFullScreen}
+                    onEdit={editRecipe}
                   />
                 } 
               />
               <Route 
                 path="/new-recipe" 
-                element={<NewRecipePage onAddRecipe={addRecipe} />} 
+                element={<NewRecipePage onAddRecipe={addRecipe} onEditRecipe={editRecipe} />} 
               />
-            </Routes>
+              <Route 
+                path="/meal-planning" 
+                element={<MealPlanningPage recipes={recipes} />} 
+              />
+              <Route 
+                path="/auth" 
+                element={<Navigate to="/" replace />} 
+              />
+              <Route 
+                path="*" 
+                element={<Navigate to="/" replace />} 
+              />
+            </>
+          ) : (
+            <>
+              <Route 
+                path="/auth" 
+                element={<Auth />} 
+              />
+              <Route 
+                path="*" 
+                element={<Navigate to="/auth" replace />} 
+              />
+            </>
+          )}
+        </Routes>
 
-            {/* Overlay plein écran */}
-            {fullScreenRecipe && (
-              <div className="full-screen-overlay" onClick={closeFullScreen}>
-                <div 
-                  className="full-screen-recipe" 
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button 
-                    className="close-full-screen-btn" 
-                    onClick={closeFullScreen}
-                  >
-                    ✕
-                  </button>
-                  <div className="full-screen-recipe-content">
-                    <div className="full-screen-recipe-image">
-                      <img 
-                        src={fullScreenRecipe.imageUrl} 
-                        alt={fullScreenRecipe.title} 
-                      />
-                    </div>
-                    <div className="full-screen-recipe-details">
-                      <h2>{fullScreenRecipe.title}</h2>
-                      <p><strong>Temps de préparation :</strong> {fullScreenRecipe.prepTime}</p>
-                      
-                      <div className="full-screen-section">
-                        <h3>Ingrédients</h3>
-                        <ul>
-                          {fullScreenRecipe.ingredients.map((ingredient, index) => (
-                            <li key={index}>{ingredient}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      <div className="full-screen-section">
-                        <h3>Instructions</h3>
-                        <ol>
-                          {fullScreenRecipe.instructions.map((step, index) => (
-                            <li key={index}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    </div>
+        {/* Overlay plein écran */}
+        {user && fullScreenRecipe && (
+          <div className="full-screen-overlay" onClick={closeFullScreen}>
+            <div 
+              className="full-screen-recipe" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="full-screen-recipe-glass-overlay"></div>
+              
+              <button 
+                className="close-full-screen-btn" 
+                onClick={closeFullScreen}
+              >
+                ✕
+              </button>
+
+              <div className="full-screen-recipe-image">
+                <img 
+                  src={fullScreenRecipe.imageUrl || 'https://via.placeholder.com/500x200'} 
+                  alt={fullScreenRecipe.title} 
+                />
+              </div>
+              
+              <div className="full-screen-recipe-content">
+                <div className="full-screen-recipe-details">
+                  <h2>{fullScreenRecipe.title}</h2>
+
+                  <div className="recipe-prep-time">
+                    <h3>Temps de préparation</h3>
+                    <p>{fullScreenRecipe.prepTime || 'Non spécifié'}</p>
+                  </div>
+
+                  <div className="recipe-ingredients">
+                    <h3>Ingrédients</h3>
+                    <ul>
+                      {fullScreenRecipe.ingredients && fullScreenRecipe.ingredients.length > 0 ? (
+                        fullScreenRecipe.ingredients.map((ingredient, index) => (
+                          <li key={index}>{ingredient}</li>
+                        ))
+                      ) : (
+                        <li>Aucun ingrédient</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="recipe-instructions">
+                    <h3>Instructions</h3>
+                    <ol>
+                      {fullScreenRecipe.instructions && fullScreenRecipe.instructions.length > 0 ? (
+                        fullScreenRecipe.instructions.map((step, index) => (
+                          <li key={index}>{step}</li>
+                        ))
+                      ) : (
+                        <li>Aucune instruction</li>
+                      )}
+                    </ol>
                   </div>
                 </div>
               </div>
-            )}
-          </>
-        ) : (
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="*" element={<Navigate to="/auth" />} />
-          </Routes>
+            </div>
+          </div>
+        )}
+
+        {user && (
+          <div className="app-navigation">
+            <button 
+              onClick={handleLogout} 
+              className="logout-btn"
+            >
+              Déconnexion
+            </button>
+          </div>
         )}
       </div>
     </Router>
